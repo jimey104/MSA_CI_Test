@@ -1,0 +1,35 @@
+name: Build and Push MSA Backend Images
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        service: [
+          flight-service,
+          reservation-service,
+          user-service,
+          flight-reservation-gateway,
+          flight-reservation-server
+        ]
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to DockerHub
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      - name: Build and Push Docker Image for ${{ matrix.service }}
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/${{ matrix.service }}:latest ./${{ matrix.service }}
+          docker push ${{ secrets.DOCKER_USERNAME }}/${{ matrix.service }}:latest
