@@ -13,18 +13,30 @@ jobs:
       matrix:
         service: [
           flight-service,
-          reservation-service,
+          flight-reservation-server,
           user-service,
           flight-reservation-gateway,
-          flight-reservation-server
+          reservation-service
         ]
 
     steps:
       - name: Checkout source
         uses: actions/checkout@v3
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Set permission for Gradle wrapper
+        run: chmod +x ${{ matrix.service }}/gradlew
+
+      - name: Build JAR for ${{ matrix.service }}
+        run: |
+          cd ${{ matrix.service }}
+          ./gradlew clean bootJar -x test
+          cd ..
 
       - name: Log in to DockerHub
         run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
